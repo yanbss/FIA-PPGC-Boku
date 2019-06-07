@@ -81,6 +81,9 @@ class Game:
                 height = 15 - column
             self.board.append([0] * height)
 
+        #movimentos = self.get_available_moves
+        #self.nivel = self.nivel - 1
+
     def get_position(self, column, line):
         return self.board[column - 1][line - 1]
 
@@ -93,7 +96,9 @@ class Game:
     def place_piece(self, column, line, state):
         self.board = self.set_position(column, line, state)
         if(state == 0):
-            nivel = nivel + 1 #peça removida, número de niveis que a árvore pode chegar aumenta em 1
+            self.nivel = self.nivel + 1 #peça removida, número de niveis que a árvore pode chegar aumenta em 1
+        else:
+            self.nivel = self.nivel - 1
 
     # Get a fixed-size list of neighbors: [top, top-right, top-left, down, down-right, down-left].
     # None at any of those places where there's no neighbor
@@ -344,7 +349,9 @@ class Game:
             self.player = 2
         else:
             self.player = 1
-        self.nivel = nivel - 1 ####################################################
+        self.nivel = self.nivel - 1 ####################################################
+        #movimentos = self.get_available_moves
+        #self.nivel = len(movimentos)
         return self.player
 
     def make_move(self, player, column, line):
@@ -406,19 +413,21 @@ class Game:
 
         return (1, "ok")
 
-    def miniMax(self, nivel, jogador): #nivel máximo = 80
+    def miniMax(self, jogador): #nivel máximo = 80
 
         filhos = []
 
-        if(heuristica(self) != 0 or nivel == 0): #SE nó é um nó terminal OU profundidade = 0 ENTÃO
-            return heuristica(self), self.tab
+        print('executando minimax ')
+
+        if(self.heuristica() != 0 or self.nivel == 0): #SE nó é um nó terminal OU profundidade = 0 ENTÃO
+            return self.heuristica(), self.board
 
         elif(jogador == 1):                       #SENÃO SE maximizador é FALSE ENTÃO
             minimo = 99                            #α ← +∞
-            escolhido = self.tab
-            filhos = abreTabuleiro(self, jogador)
+            escolhido = self.board
+            filhos = self.abreTabuleiro(jogador)
             for filho in filhos:                   #PARA CADA filho DE nó
-                var, tab = miniMax(filho, nivel-1, 1)
+                var, tab = filho.miniMax(1)
                 if(var < minimo):
                     minimo = var                   #α ← min(α, minimax(filho, profundidade-1,true))
                     escolhido = filho
@@ -426,57 +435,58 @@ class Game:
 
         elif(jogador == 2):                        #SENÃO //Maximizador
             maximo = -99                           #α ← -∞
-            escolhido = self.tab
-            filhos = abreTabuleiro(self, jogador)
+            escolhido = self.board
+            filhos = self.abreTabuleiro(jogador)
             for filho in filhos:                   #PARA CADA filho DE nó
-                var, tab = miniMax(filho, nivel-1, 2)   
+                var, tab = filho.miniMax(2)   
                 if(var > maximo):
                     maximo = var                   #α ← max(α, minimax(filho, profundidade-1,false))
                     escolhido = filho
             return maximo, escolhido
 
-    def abreTabuleiro(jogo, jogador): #gera todas as jogadas possíveis naquele ponto
+    def abreTabuleiro(self, jogador): #gera todas as jogadas possíveis naquele ponto
         
         x = 0
         y = 0
         filhos = []
+        print('abrindo tabuleiro')
 
-        tabuleiro = jogo.tab
+        tabuleiro = self.board
 
         while(x < 10):
             if(x == 0 or x == 9):
                 while(y < 5):
                     if(tabuleiro[x][y] == 0):
-                        j = Game()
-                        j.place_piece(jogo, y, x, jogador)
+                        j = copy.deepcopy(self)
+                        j.place_piece(y, x, jogador)
                         filhos.append(j)
                     y = y + 1
             elif(x == 1 or x == 8):
                 while(y < 6):
                     if(tabuleiro[x][y] == 0):
-                        j = Game()
-                        j.place_piece(jogo, y, x, jogador)
+                        j = copy.deepcopy(self)
+                        j.place_piece(y, x, jogador)
                         filhos.append(j)
                     y = y + 1
             elif(x == 2 or x == 7):
                 while(y < 7):
                     if(tabuleiro[x][y] == 0):
-                        j = Game()
-                        j.place_piece(jogo, y, x, jogador)
+                        j = copy.deepcopy(self)
+                        j.place_piece(y, x, jogador)
                         filhos.append(j)
                     y = y + 1
             elif(x == 3 or x == 6):
                 while(y < 8):
                     if(tabuleiro[x][y] == 0):
-                        j = Game()
-                        j.place_piece(jogo, y, x, jogador)
+                        j = copy.deepcopy(self)
+                        j.place_piece(y, x, jogador)
                         filhos.append(j)
                     y = y + 1
             elif(x == 4 or x == 5):
                 while(y < 9):
                     if(tabuleiro[x][y] == 0):
-                        j = Game()
-                        j.place_piece(jogo, y, x, jogador)
+                        j = copy.deepcopy(self)
+                        j.place_piece(y, x, jogador)
                         filhos.append(j)
                     y = y + 1
             y = 0
@@ -484,14 +494,58 @@ class Game:
 
         return filhos
 
-    def heuristica(tabuleiro):        #retorna o valor da heurística daquele tabuleiro (0 = empate, 1 = jogador 1 ganha, -1 = jogador 2 (computador) ganha)
+    def heuristica(self):        #retorna o valor da heurística daquele tabuleiro (0 = empate, 1 = jogador 1 ganha, -1 = jogador 2 (computador) ganha)
         
-        if(tabuleiro.is_final_state == None):
+        if(self.is_final_state() == None):
             return 0
-        elif(tabuleiro.is_final_state == 1):
+        elif(self.is_final_state() == 1):
             return 1
-        elif(tabuleiro.is_final_state == 2):
+        elif(self.is_final_state() == 2):
             return -1
+
+    def posicao(self, escolhido):
+
+        tabatual = self.board
+        x = 0
+        y = 0
+        escx = 0
+        escy = 0
+
+        while(x < 10):
+            if(x == 0 or x == 9):
+                while(y < 5):
+                    if(tabatual[x][y] != escolhido[x][y]):
+                        escx = x
+                        escy = y
+                    y = y + 1
+            elif(x == 1 or x == 8):
+                while(y < 6):
+                    if(tabatual[x][y] != escolhido[x][y]):
+                        escx = x
+                        escy = y
+                    y = y + 1
+            elif(x == 2 or x == 7):
+                while(y < 7):
+                    if(tabatual[x][y] != escolhido[x][y]):
+                        escx = x
+                        escy = y
+                    y = y + 1
+            elif(x == 3 or x == 6):
+                while(y < 8):
+                    if(tabatual[x][y] != escolhido[x][y]):
+                        escx = x
+                        escy = y
+                    y = y + 1
+            elif(x == 4 or x == 5):
+                while(y < 9):
+                    if(tabatual[x][y] != escolhido[x][y]):
+                        escx = x
+                        escy = y
+                    y = y + 1
+            y = 0
+        x = x + 1
+
+        return escx, escy
 
 ###### SERVER ######
 
@@ -575,7 +629,13 @@ def move():
     coluna = int(request.args.get('coluna'))
     linha = int(request.args.get('linha'))
     player = int(request.args.get('player'))
-    r = game.make_move(player, coluna, linha)
+    if(player == 1):
+        r = game.make_move(player, coluna, linha)
+    elif(player == 2):
+        print('entrou minimax')
+        valor, escolhido = game.miniMax(player)
+        linha, coluna = game.posicao(escolhido)
+        r = game.make_move(player, coluna, linha)
     socketio.emit('update', namespace='/socket')
 
     if request.args.get('format') == "json":
