@@ -413,21 +413,19 @@ class Game:
 
         return (1, "ok")
 
-    def miniMax(self, jogador): #nivel máximo = 80
+    def miniMax(self, tabuleiro, nivel, jogador): #nivel máximo = 80
 
         filhos = []
 
-        print('executando minimax ')
-
-        if(self.heuristica() != 0 or self.nivel == 0): #SE nó é um nó terminal OU profundidade = 0 ENTÃO
-            return self.heuristica(), self.board
+        if(self.heuristica(tabuleiro) != 0 or nivel == 0): #SE nó é um nó terminal OU profundidade = 0 ENTÃO
+            return self.heuristica(tabuleiro), tabuleiro
 
         elif(jogador == 1):                       #SENÃO SE maximizador é FALSE ENTÃO
             minimo = 99                            #α ← +∞
-            escolhido = self.board
-            filhos = self.abreTabuleiro(jogador)
+            escolhido = tabuleiro
+            filhos = self.abreTabuleiro(tabuleiro, jogador)
             for filho in filhos:                   #PARA CADA filho DE nó
-                var, tab = filho.miniMax(1)
+                var, tab = self.miniMax(filho, nivel-1, 2)
                 if(var < minimo):
                     minimo = var                   #α ← min(α, minimax(filho, profundidade-1,true))
                     escolhido = filho
@@ -435,77 +433,78 @@ class Game:
 
         elif(jogador == 2):                        #SENÃO //Maximizador
             maximo = -99                           #α ← -∞
-            escolhido = self.board
-            filhos = self.abreTabuleiro(jogador)
+            escolhido = tabuleiro
+            filhos = self.abreTabuleiro(tabuleiro, jogador)
             for filho in filhos:                   #PARA CADA filho DE nó
-                var, tab = filho.miniMax(2)   
+                var, tab = self.miniMax(filho, nivel-1, 1)   
                 if(var > maximo):
                     maximo = var                   #α ← max(α, minimax(filho, profundidade-1,false))
                     escolhido = filho
             return maximo, escolhido
 
-    def abreTabuleiro(self, jogador): #gera todas as jogadas possíveis naquele ponto
+    def abreTabuleiro(self, tabuleiro, jogador): #gera todas as jogadas possíveis naquele ponto
         
         x = 0
         y = 0
         filhos = []
-        print('abrindo tabuleiro')
-
-        tabuleiro = self.board
 
         while(x < 10):
+            print('oi')
             if(x == 0 or x == 9):
                 while(y < 5):
                     if(tabuleiro[x][y] == 0):
-                        j = copy.deepcopy(self)
-                        j.place_piece(y, x, jogador)
-                        filhos.append(j)
+                        t = tabuleiro.copy()
+                        t[x][y] = jogador
+                        filhos.append(t)
                     y = y + 1
             elif(x == 1 or x == 8):
                 while(y < 6):
                     if(tabuleiro[x][y] == 0):
-                        j = copy.deepcopy(self)
-                        j.place_piece(y, x, jogador)
-                        filhos.append(j)
+                        t = tabuleiro.copy()
+                        t[x][y] = jogador
+                        filhos.append(t)
                     y = y + 1
             elif(x == 2 or x == 7):
                 while(y < 7):
                     if(tabuleiro[x][y] == 0):
-                        j = copy.deepcopy(self)
-                        j.place_piece(y, x, jogador)
-                        filhos.append(j)
+                        t = tabuleiro.copy()
+                        t[x][y] = jogador
+                        filhos.append(t)
                     y = y + 1
             elif(x == 3 or x == 6):
                 while(y < 8):
                     if(tabuleiro[x][y] == 0):
-                        j = copy.deepcopy(self)
-                        j.place_piece(y, x, jogador)
-                        filhos.append(j)
+                        t = tabuleiro.copy()
+                        t[x][y] = jogador
+                        filhos.append(t)
                     y = y + 1
             elif(x == 4 or x == 5):
                 while(y < 9):
                     if(tabuleiro[x][y] == 0):
-                        j = copy.deepcopy(self)
-                        j.place_piece(y, x, jogador)
-                        filhos.append(j)
+                        t = tabuleiro.copy()
+                        t[x][y] = jogador
+                        filhos.append(t)
                     y = y + 1
             y = 0
-        x = x + 1
+            x = x + 1
 
         return filhos
 
-    def heuristica(self):        #retorna o valor da heurística daquele tabuleiro (0 = empate, 1 = jogador 1 ganha, -1 = jogador 2 (computador) ganha)
+    def heuristica(self, tabuleiro):        #retorna o valor da heurística daquele tabuleiro (0 = empate, 1 = jogador 1 ganha, -1 = jogador 2 (computador) ganha)
         
-        if(self.is_final_state() == None):
+        j = Game()
+        j.init_board()
+        j.board = tabuleiro
+
+        if(j.is_final_state() == None):
             return 0
-        elif(self.is_final_state() == 1):
+        elif(j.is_final_state() == 1):
             return 1
-        elif(self.is_final_state() == 2):
+        elif(j.is_final_state() == 2):
             return -1
+        
+    def posicao(self, tabatual, escolhido):
 
-    def posicao(self, escolhido):
-
-        tabatual = self.board
         x = 0
         y = 0
         escx = 0
@@ -632,9 +631,8 @@ def move():
     if(player == 1):
         r = game.make_move(player, coluna, linha)
     elif(player == 2):
-        print('entrou minimax')
-        valor, escolhido = game.miniMax(player)
-        linha, coluna = game.posicao(escolhido)
+        valor, escolhido = game.miniMax(game.board, game.nivel, player)
+        linha, coluna = game.posicao(game.board, escolhido)
         r = game.make_move(player, coluna, linha)
     socketio.emit('update', namespace='/socket')
 
