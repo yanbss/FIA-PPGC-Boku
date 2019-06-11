@@ -1,22 +1,25 @@
-import urllib.request, sys, random, time
-
+import urllib.request, sys, random, time, copy
+from math import inf
 
 ######################FUNÇÕES PARA EXECUTAR IA (MiniMax): #############################################
 
-def miniMax(tabuleiro, nivel, jogador): #nivel máximo = 80
+def miniMax(tabuleiro, nivel, jogador, nivelMax): #nivel máximo = 80
 
     filhos = []
     h = heuristica(tabuleiro, nivel)
 
-    if(h != 0 or nivel == 0): #SE nó é um nó terminal OU profundidade = 0 ENTÃO
-        return h, tabuleiro
+    if(h != 0 or nivel == nivelMax): #SE nó é um nó terminal OU profundidade = 0 ENTÃO
+    	return h, tabuleiro
 
     elif(jogador == 1):                       #SENÃO SE maximizador é FALSE ENTÃO
         minimo = inf                         #α ← +∞
-        escolhido = tabuleiro
-        filhos = abreTabuleiro(tabuleiro, jogador)
+        escolhido = None
+        filhos = get_available_moves(tabuleiro) #gera lista de jogadas, tem que botar no tabuleiro
         for filho in filhos:                   #PARA CADA filho DE nó
-            var, tab = miniMax(filho, nivel-1, 2)
+            x, y = filho
+            t = copy.deepcopy(tabuleiro)
+            t[x][y] = 1
+            var, tab = miniMax(t, nivel-1, 2, nivelMax)
             if(var < minimo):
                 minimo = var                   #α ← min(α, minimax(filho, profundidade-1,true))
                 escolhido = filho
@@ -24,130 +27,136 @@ def miniMax(tabuleiro, nivel, jogador): #nivel máximo = 80
 
     elif(jogador == 2):                        #SENÃO //Maximizador
         maximo = -inf                         #α ← -∞
-        escolhido = tabuleiro
-        filhos = abreTabuleiro(tabuleiro, jogador)
+        escolhido = None
+        filhos = get_available_moves(tabuleiro)
         for filho in filhos:                   #PARA CADA filho DE nó
-            var, tab = miniMax(filho, nivel-1, 1)   
+            x, y = filho
+            t = copy.deepcopy(tabuleiro)
+            t[x][y] = 2
+            var, tab = miniMax(t, nivel-1, 1, nivelMax)
             if(var > maximo):
                 maximo = var                   #α ← max(α, minimax(filho, profundidade-1,false))
                 escolhido = filho
         return maximo, escolhido
 
-def abreTabuleiro(tabuleiro, jogador): #gera todas as jogadas possíveis naquele ponto
-    
-    x = 0
-    y = 0
-    filhos = []
-
-    while(x < 11):
-        if(x == 0 or x == 10):
-            while(y < 5):
-                if(tabuleiro[x][y] == 0):
-                    filhos.append(jogada(copy.deepcopy(tabuleiro), jogador, x, y))
-                y = y + 1
-        elif(x == 1 or x == 9):
-            while(y < 6):
-                if(tabuleiro[x][y] == 0):
-                    filhos.append(jogada(copy.deepcopy(tabuleiro), jogador, x, y))   
-                y = y + 1
-        elif(x == 2 or x == 8):
-            while(y < 7):
-                if(tabuleiro[x][y] == 0):
-                    filhos.append(jogada(copy.deepcopy(tabuleiro), jogador, x, y))
-                y = y + 1
-        elif(x == 3 or x == 7):
-            while(y < 8):
-                if(tabuleiro[x][y] == 0):
-                    filhos.append(jogada(copy.deepcopy(tabuleiro), jogador, x, y))
-                y = y + 1
-        elif(x == 4 or x == 6):
-            while(y < 9):
-                if(tabuleiro[x][y] == 0):
-                    filhos.append(jogada(copy.deepcopy(tabuleiro), jogador, x, y))
-                y = y + 1
-        elif(x == 5):
-            while(y < 10):
-                if(tabuleiro[x][y] == 0):
-                    filhos.append(jogada(copy.deepcopy(tabuleiro), jogador, x, y))
-                y = y + 1
-        y = 0
-        x = x + 1
-
-    return filhos
 
 def heuristica(tabuleiro, nivel):        #retorna o valor da heurística daquele tabuleiro (0 = empate, 1 = jogador 1 ganha, -1 = jogador 2 (computador) ganha)
     
-    j = Game()
-    j.init_board()
-    j.board = tabuleiro
-
-    if(j.is_final_state() == None):
+    if(is_final_state(tabuleiro) == None):
         return 0
-    elif(j.is_final_state() == 1):
+    elif(is_final_state(tabuleiro) == 1):
         return 1
-    elif(j.is_final_state() == 2):
+    elif(is_final_state(tabuleiro) == 2):
         return -1
-    
-def posicao(tabatual, escolhido):
-
-    x = 0
-    y = 0
-    escx = 0
-    escy = 0
-    print('entrou pra escolher posicao')
-
-    while(x < 11):
-        if(x == 0 or x == 10):
-            while(y < 5):
-                if(tabatual[x][y] != escolhido[x][y]):
-                    escx = x
-                    escy = y
-                y = y + 1
-        elif(x == 1 or x == 9):
-            while(y < 6):
-                if(tabatual[x][y] != escolhido[x][y]):
-                    escx = x
-                    escy = y
-                y = y + 1
-        elif(x == 2 or x == 8):
-            while(y < 7):
-                if(tabatual[x][y] != escolhido[x][y]):
-                    escx = x
-                    escy = y
-                y = y + 1
-        elif(x == 3 or x == 7):
-            while(y < 8):
-                if(tabatual[x][y] != escolhido[x][y]):
-                    escx = x
-                    escy = y
-                y = y + 1
-        elif(x == 4 or x == 6):
-            while(y < 9):
-                if(tabatual[x][y] != escolhido[x][y]):
-                    escx = x
-                    escy = y
-                y = y + 1
-        elif(x == 5):
-            while(y < 10):
-                if(tabatual[x][y] != escolhido[x][y]):
-                    escx = x
-                    escy = y
-                y = y + 1
-        y = 0
-        x = x + 1
-    
-    return escx, escy
-
-def jogada(tabuleiro, jogador, x, y):
-
-    tabuleiro[x][y] = jogador
-    return tabuleiro
 
 
+####################FUNÇÕES HERDADAS DE SERVER.PY PARA CÁLCULO DE HEURÍSTICA: ##################################
+
+def neighbors(tabuleiro, coluna, linha):
+        l = []
+
+        if linha > 1:
+            l.append((coluna, linha - 1))  # up
+        else:
+            l.append(None)
+
+        if (coluna < 6 or linha > 1) and (coluna < len(tabuleiro)):
+            if coluna >= 6:
+                l.append((coluna + 1, linha - 1))  # upper right
+            else:
+                l.append((coluna + 1, linha))  # upper right
+        else:
+            l.append(None)
+        if (coluna > 6 or linha > 1) and (coluna > 1):
+            if coluna > 6:
+                l.append((coluna - 1, linha))  # upper left
+            else:
+                l.append((coluna - 1, linha - 1))  # upper left
+        else:
+            l.append(None)
+
+        if linha < len(tabuleiro[coluna - 1]):
+            l.append((coluna, linha + 1))  # down
+        else:
+            l.append(None)
+
+        if (coluna < 6 or linha < len(tabuleiro[coluna - 1])) and coluna < len(tabuleiro):
+            if coluna < 6:
+                l.append((coluna + 1, linha + 1))  # down right
+            else:
+                l.append((coluna + 1, linha))  # down right
+        else:
+            l.append(None)
+
+        if (coluna > 6 or linha < len(tabuleiro[coluna - 1])) and coluna > 1:
+            if coluna > 6:
+                l.append((coluna - 1, linha + 1))  # down left
+            else:
+                l.append((coluna - 1, linha))  # down left
+        else:
+            l.append(None)
+
+        return l
+
+def is_final_state(tabuleiro):
+        # test vertical
+        for column in range(len(tabuleiro)):
+            s = ""
+            for line in range(len(tabuleiro[column])):
+                state = tabuleiro[column][line]
+                s += str(state)
+                if "11111" in s:
+                    return 1
+                if "22222" in s:
+                    return 2
+
+        # test upward diagonals
+        diags = [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
+                 (2, 6), (3, 7), (4, 8), (5, 9), (6, 10)]
+        for column_0, line_0 in diags:
+            s = ""
+            coords = (column_0, line_0)
+            while coords != None:
+                column = coords[0]
+                line = coords[1]
+                state = tabuleiro[column - 1][line - 1]
+                s += str(state)
+                if "11111" in s:
+                    return 1
+                if "22222" in s:
+                    return 2
+                coords = neighbors(tabuleiro, column, line)[1]
+
+        # test downward diagonals
+        diags = [(6, 1), (5, 1), (4, 1), (3, 1), (2, 1),
+                 (1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]
+        for column_0, line_0 in diags:
+            s = ""
+            coords = (column_0, line_0)
+            while coords != None:
+                column = coords[0]
+                line = coords[1]
+                state = tabuleiro[column - 1][line - 1]
+                s += str(state)
+                if "11111" in s:
+                    return 1
+                if "22222" in s:
+                    return 2
+                coords = neighbors(tabuleiro, column, line)[4]
+
+        return None
+
+def get_available_moves(tabuleiro):
+	l = []
+
+	for column in range(len(tabuleiro)):
+		for line in range(len(tabuleiro[column])):
+			if(tabuleiro[column][line] == 0):
+				l.append((column, line))
+
+	return l
 
 #########CLIENTE: (adaptado de random_client.py) ###############################################
-
-
 
 if len(sys.argv)==1:
     print("Voce deve especificar o numero do jogador (1 ou 2)\n\nExemplo:    ./random_client.py 1")
@@ -178,19 +187,20 @@ while not done:
         resp = urllib.request.urlopen("%s/movimentos" % host)
         movimentos = eval(resp.read())
 
-        # Escolhe um movimento aleatoriamente
-        movimento = random.choice(movimentos)
-
         # Pega tabuleiro:
         resp = urllib.request.urlopen("%s/tabuleiro" % host)
-        tabuleiro = eval(resp.read())
+        tab = eval(resp.read())
 
         #APLICA MINIMAX E GERA O MOVIMENTO:
 
-        valor, escolhido = miniMax(tabuleiro, len(movimentos), player)
-        c, l = posicao(tabuleiro, escolhido)
-        coluna = int(c)
-        linha = int(l)
+        tinicial = time.time()
+        valor, escolhido = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-2)
+        tfinal = time.time()
+        tempo = tfinal - tinicial
+        print('Tempo total: ')
+        print(tempo)
+        coluna = escolhido[0]
+        linha = escolhido[1]
         print('posicao escolhida: ')
         print(coluna)
         print(linha)
