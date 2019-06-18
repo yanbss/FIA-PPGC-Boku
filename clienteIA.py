@@ -6,49 +6,79 @@ from math import inf
 def miniMax(tabuleiro, nivel, jogador, nivelMax): #nivel máximo = 80
 
     filhos = []
-    h = heuristica(tabuleiro, nivel)
+    h = heuristica(tabuleiro)
 
     if(h != 0 or nivel == nivelMax): #SE nó é um nó terminal OU profundidade = 0 ENTÃO
     	return h, tabuleiro
 
     elif(jogador == 1):                       #SENÃO SE maximizador é FALSE ENTÃO
         minimo = inf                         #α ← +∞
-        escolhido = None
+        escolhido = tabuleiro
         filhos = get_available_moves(tabuleiro) #gera lista de jogadas, tem que botar no tabuleiro
         for filho in filhos:                   #PARA CADA filho DE nó
             x, y = filho
-            t = copy.deepcopy(tabuleiro)
-            t[x][y] = 1
-            var, tab = miniMax(t, nivel-1, 2, nivelMax)
-            if(var < minimo):
-                minimo = var                   #α ← min(α, minimax(filho, profundidade-1,true))
-                escolhido = filho
+            if(outroJogador(tabuleiro, x, jogador) == 0):
+	            t = copy.deepcopy(tabuleiro)
+	            t[x][y] = 1
+	            var, tab = miniMax(t, nivel-1, 2, nivelMax)
+	            if(var < minimo):
+	                minimo = var                   #α ← min(α, minimax(filho, profundidade-1,true))
+	                escolhido = filho
         return minimo, escolhido               #RETORNE α
 
     elif(jogador == 2):                        #SENÃO //Maximizador
         maximo = -inf                         #α ← -∞
-        escolhido = None
+        escolhido = tabuleiro
         filhos = get_available_moves(tabuleiro)
         for filho in filhos:                   #PARA CADA filho DE nó
             x, y = filho
-            t = copy.deepcopy(tabuleiro)
-            t[x][y] = 2
-            var, tab = miniMax(t, nivel-1, 1, nivelMax)
-            if(var > maximo):
-                maximo = var                   #α ← max(α, minimax(filho, profundidade-1,false))
-                escolhido = filho
+            if(outroJogador(tabuleiro, x, jogador) == 0):
+	            t = copy.deepcopy(tabuleiro)
+	            t[x][y] = 2
+	            var, tab = miniMax(t, nivel-1, 1, nivelMax)
+	            if(var > maximo):
+	                maximo = var                   #α ← max(α, minimax(filho, profundidade-1,false))
+	                escolhido = filho
         return maximo, escolhido
 
 
-def heuristica(tabuleiro, nivel):        #retorna o valor da heurística daquele tabuleiro (0 = empate, 1 = jogador 1 ganha, -1 = jogador 2 (computador) ganha)
+def heuristica(tabuleiro):        #retorna o valor da heurística daquele tabuleiro (0 = empate, 1 = jogador 1 ganha, -1 = jogador 2 (computador) ganha)
     
-    if(is_final_state(tabuleiro) == None):
-        return 0
-    elif(is_final_state(tabuleiro) == 1):
-        return 1
-    elif(is_final_state(tabuleiro) == 2):
-        return -1
+	#impedejogada = 0
 
+	if(is_final_state(tabuleiro) == None):
+		return 0
+	elif(is_final_state(tabuleiro) == 1):
+		return -1
+	elif(is_final_state(tabuleiro) == 2):
+		return 1
+
+	'''
+		for i in range (len(tabuleiro)):
+			tamanhocoluna = len(tabuleiro[i])
+			for j in range (tamanhocoluna):
+				if(tabuleiro[i][j] == jogador):
+					for k in range (tamanhocoluna): #testa se tem outro jogador naquela coluna
+						if (tabuleiro[i][k] != jogador and tabuleiro[i][k] != 0): #se tiver, impede de jogar naquela coluna
+							return 0
+		if(jogador == 1):
+			return 1
+		if(jogador == 2):
+			return -1
+	'''
+
+def outroJogador(tabuleiro, coluna, jogador):
+
+	if(jogador == 1):
+		outro = 2
+	else:
+		outro = 1
+
+	for j in range(len(tabuleiro[coluna])):
+		if(tabuleiro[coluna][j] == outro):
+			return 1
+
+	return 0
 
 ####################FUNÇÕES HERDADAS DE SERVER.PY PARA CÁLCULO DE HEURÍSTICA: ##################################
 
@@ -196,9 +226,9 @@ while not done:
         tinicial = time.time()
         valor, escolhido = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-2)
         tfinal = time.time()
-        tempo = tfinal - tinicial
         print('Tempo total: ')
-        print(tempo)
+        print(tfinal - tinicial)
+
         coluna = escolhido[0]
         linha = escolhido[1]
         print('posicao escolhida: ')
