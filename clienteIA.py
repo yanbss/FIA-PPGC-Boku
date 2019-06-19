@@ -17,7 +17,6 @@ def miniMax(tabuleiro, nivel, jogador, nivelMax, parte): #nivel máximo = 80
         filhos = get_available_moves(tabuleiro) #gera lista de jogadas, tem que botar no tabuleiro
         for filho in filhos:                   #PARA CADA filho DE nó
             x, y = filho
-            #if(outroJogador(tabuleiro, x, jogador) == 0):
             if(filho in parte):
                 t = copy.deepcopy(tabuleiro)
                 t[x][y] = 1
@@ -33,7 +32,6 @@ def miniMax(tabuleiro, nivel, jogador, nivelMax, parte): #nivel máximo = 80
         filhos = get_available_moves(tabuleiro)
         for filho in filhos:                   #PARA CADA filho DE nó
             x, y = filho
-            #if(outroJogador(tabuleiro, x, jogador) == 0):
             if(filho in parte):
                 t = copy.deepcopy(tabuleiro)
                 t[x][y] = 2
@@ -52,19 +50,6 @@ def heuristica(tabuleiro, nivel):        #retorna o valor da heurística daquele
         return -1 - nivel
     elif(is_final_state(tabuleiro) == 2):
         return 1 + nivel
-
-    return 0
-
-def outroJogador(tabuleiro, coluna, jogador):
-
-    if(jogador == 1):
-        outro = 2
-    else:
-        outro = 1
-
-    for j in range(len(tabuleiro[coluna])):
-        if(tabuleiro[coluna][j] == outro):
-            return 1
 
     return 0
 
@@ -243,16 +228,18 @@ while not done:
         resp = urllib.request.urlopen("%s/tabuleiro" % host)
         tab = eval(resp.read())
 
+        ######ARRUMAR PRA INCREMETNAR QUANDO TEM OUTRO JOGADOR QUE NAO ELE PROPRIO
+
+        if(is_final_state(tab) == 1):
+            print("Incrementou vitoria1")
+            vitoria1 += "1"
+        if(is_final_state(tab) == 2):
+            print("Incrementou vitoria2")
+            vitoria2 += "2"
+
         if(len(movimentos) > 6): #jogadas normais, sem remoção
 
             #APLICA MINIMAX NAS 4 PARTES DO TABULEIRO E GERA O MOVIMENTO:
-
-            if(is_final_state(tab) == 1):
-                print("Incrementou vitoria1")
-                vitoria1 += "1"
-            if(is_final_state(tab) == 2):
-                print("Incrementou vitoria2")
-                vitoria2 += "2"
 
             tinicial = time.time()
 
@@ -261,28 +248,28 @@ while not done:
             valorCima, escolhidoCima = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabCima)
             valor = abs(valorCima)
             escolhido = escolhidoCima
-            print('Fez tabela de cima')
+            #print('Fez tabela de cima')
 
             valorEsquerda, escolhidoEsquerda = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabEsquerda)
             if(abs(valorEsquerda) > valor and valorEsquerda != 0):
                 valor = abs(valorEsquerda)
                 escolhido = escolhidoEsquerda
 
-            print('Fez tabela da esquerda')
+            #print('Fez tabela da esquerda')
 
             valorBaixo, escolhidoBaixo = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabBaixo)
             if(abs(valorBaixo) > valor and valorBaixo != 0):
                 valor = abs(valorBaixo)
                 escolhido = escolhidoBaixo
 
-            print('Fez tabela de baixo')
+            #print('Fez tabela de baixo')
 
             valorDireita, escolhidoDireita = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabDireita)
             if(abs(valorDireita) > valor and valorDireita != 0):
                 valor = abs(valorDireita)
                 escolhido = escolhidoDireita
 
-            print('Fez tabela da direita')
+            #('Fez tabela da direita')
 
             tfinal = time.time()
             print('Tempo total: ')
