@@ -243,51 +243,59 @@ while not done:
         resp = urllib.request.urlopen("%s/tabuleiro" % host)
         tab = eval(resp.read())
 
-        #APLICA MINIMAX NAS 4 PARTES DO TABULEIRO E GERA O MOVIMENTO:
+        if(len(movimentos) > 6): #jogadas normais, sem remoção
 
-        if(is_final_state(tab) == 1):
-        	print("Incrementou vitoria1")
-        	vitoria1 += "1"
-        if(is_final_state(tab) == 2):
-        	print("Incrementou vitoria2")
-        	vitoria2 += "2"
+            #APLICA MINIMAX NAS 4 PARTES DO TABULEIRO E GERA O MOVIMENTO:
 
-        tinicial = time.time()
+            if(is_final_state(tab) == 1):
+                print("Incrementou vitoria1")
+                vitoria1 += "1"
+            if(is_final_state(tab) == 2):
+                print("Incrementou vitoria2")
+                vitoria2 += "2"
 
-        #valor, escolhido = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-2)
+            tinicial = time.time()
 
-        valorCima, escolhidoCima = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabCima)
-        valor = abs(valorCima)
-        escolhido = escolhidoCima
-        print('Fez tabela de cima')
+            #valor, escolhido = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-2)
 
-        valorEsquerda, escolhidoEsquerda = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabEsquerda)
-        if(abs(valorEsquerda) > valor and valorEsquerda != 0):
-            valor = abs(valorEsquerda)
-            escolhido = escolhidoEsquerda
+            valorCima, escolhidoCima = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabCima)
+            valor = abs(valorCima)
+            escolhido = escolhidoCima
+            print('Fez tabela de cima')
 
-        print('Fez tabela da esquerda')
+            valorEsquerda, escolhidoEsquerda = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabEsquerda)
+            if(abs(valorEsquerda) > valor and valorEsquerda != 0):
+                valor = abs(valorEsquerda)
+                escolhido = escolhidoEsquerda
 
-        valorBaixo, escolhidoBaixo = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabBaixo)
-        if(abs(valorBaixo) > valor and valorBaixo != 0):
-            valor = abs(valorBaixo)
-            escolhido = escolhidoBaixo
+            print('Fez tabela da esquerda')
 
-        print('Fez tabela de baixo')
+            valorBaixo, escolhidoBaixo = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabBaixo)
+            if(abs(valorBaixo) > valor and valorBaixo != 0):
+                valor = abs(valorBaixo)
+                escolhido = escolhidoBaixo
 
-        valorDireita, escolhidoDireita = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabDireita)
-        if(abs(valorDireita) > valor and valorDireita != 0):
-            valor = abs(valorDireita)
-            escolhido = escolhidoDireita
+            print('Fez tabela de baixo')
 
-        print('Fez tabela da direita')
+            valorDireita, escolhidoDireita = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabDireita)
+            if(abs(valorDireita) > valor and valorDireita != 0):
+                valor = abs(valorDireita)
+                escolhido = escolhidoDireita
 
-        tfinal = time.time()
-        print('Tempo total: ')
-        print(tfinal - tinicial)
+            print('Fez tabela da direita')
 
-        coluna = escolhido[0]
-        linha = escolhido[1]
+            tfinal = time.time()
+            print('Tempo total: ')
+            print(tfinal - tinicial)
+            coluna = escolhido[0]
+            linha = escolhido[1]
+
+        else: #jogada de remoção, escolhe um aleatório para remover
+    
+            coluna, linha = random.choice(movimentos)
+            coluna -= 1
+            linha -= 1
+
         print('posicao escolhida: ')
         print(coluna)
         print(linha)
