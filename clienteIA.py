@@ -3,10 +3,10 @@ from math import inf
 
 ######################FUNÇÕES PARA EXECUTAR IA (MiniMax): #############################################
 
-def miniMax(tabuleiro, nivel, jogador, nivelMax): #nivel máximo = 80
+def miniMax(tabuleiro, nivel, jogador, nivelMax, parte): #nivel máximo = 80
 
     filhos = []
-    h = heuristica(tabuleiro)
+    h = heuristica(tabuleiro, nivel)
 
     if(h != 0 or nivel == nivelMax): #SE nó é um nó terminal OU profundidade = 0 ENTÃO
     	return h, tabuleiro
@@ -17,10 +17,11 @@ def miniMax(tabuleiro, nivel, jogador, nivelMax): #nivel máximo = 80
         filhos = get_available_moves(tabuleiro) #gera lista de jogadas, tem que botar no tabuleiro
         for filho in filhos:                   #PARA CADA filho DE nó
             x, y = filho
-            if(outroJogador(tabuleiro, x, jogador) == 0):
+            #if(outroJogador(tabuleiro, x, jogador) == 0):
+            if(filho in parte):
 	            t = copy.deepcopy(tabuleiro)
 	            t[x][y] = 1
-	            var, tab = miniMax(t, nivel-1, 2, nivelMax)
+	            var, tab = miniMax(t, nivel-1, 2, nivelMax, parte)
 	            if(var < minimo):
 	                minimo = var                   #α ← min(α, minimax(filho, profundidade-1,true))
 	                escolhido = filho
@@ -32,26 +33,27 @@ def miniMax(tabuleiro, nivel, jogador, nivelMax): #nivel máximo = 80
         filhos = get_available_moves(tabuleiro)
         for filho in filhos:                   #PARA CADA filho DE nó
             x, y = filho
-            if(outroJogador(tabuleiro, x, jogador) == 0):
+            #if(outroJogador(tabuleiro, x, jogador) == 0):
+            if(filho in parte):
 	            t = copy.deepcopy(tabuleiro)
 	            t[x][y] = 2
-	            var, tab = miniMax(t, nivel-1, 1, nivelMax)
+	            var, tab = miniMax(t, nivel-1, 1, nivelMax, parte)
 	            if(var > maximo):
 	                maximo = var                   #α ← max(α, minimax(filho, profundidade-1,false))
 	                escolhido = filho
         return maximo, escolhido
 
 
-def heuristica(tabuleiro):        #retorna o valor da heurística daquele tabuleiro (0 = empate, 1 = jogador 1 ganha, -1 = jogador 2 (computador) ganha)
+def heuristica(tabuleiro, nivel):        #retorna o valor da heurística daquele tabuleiro (0 = empate, 1 = jogador 1 ganha, -1 = jogador 2 (computador) ganha)
     
 	#impedejogada = 0
 
 	if(is_final_state(tabuleiro) == None):
 		return 0
 	elif(is_final_state(tabuleiro) == 1):
-		return -1
+		return -1 - nivel
 	elif(is_final_state(tabuleiro) == 2):
-		return 1
+		return 1 + nivel
 
 	'''
 		for i in range (len(tabuleiro)):
@@ -79,6 +81,22 @@ def outroJogador(tabuleiro, coluna, jogador):
 			return 1
 
 	return 0
+
+
+def geraTab(tabuleiro, parte):
+
+	l = []
+
+	if(parte == 'cima'):
+		l = ((1,0),(2,0),(2,1),(3,0),(3,1),(3,2),(4,0),(4,1),(4,2),(4,3),(5,0),(5,1),(5,2),(5,3),(5,4),(6,0),(6,1),(6,2),(6,3),(7,0),(7,1),(7,2),(8,0),(8,1),(9,0))
+	if(parte == 'esquerda'):
+		l = ((0,0),(0,1),(0,2),(0,3),(0,4),(1,1),(1,2),(1,3),(1,4),(2,2),(2,3),(2,4),(3,3),(3,4),(4,4))
+	if(parte == 'baixo'):
+		l = ((1,5),(2,5),(2,6),(3,5),(3,6),(3,7),(4,5),(4,6),(4,7),(4,8),(5,5),(5,6),(5,7),(5,8),(5,9),(6,5),(6,6),(6,7),(6,8),(7,5),(7,6),(7,7),(8,5),(8,6),(9,5))
+	if(parte == 'direita'):
+		l = ((6,4),(7,3),(7,4),(8,2),(8,3),(8,4),(9,1),(9,2),(9,3),(9,4),(10,0),(10,1),(10,2),(10,3),(10,4))
+	return l
+
 
 ####################FUNÇÕES HERDADAS DE SERVER.PY PARA CÁLCULO DE HEURÍSTICA: ##################################
 
@@ -128,16 +146,22 @@ def neighbors(tabuleiro, coluna, linha):
 
         return l
 
-def is_final_state(tabuleiro):
+def is_final_state(tabuleiro, jogador):
         # test vertical
+
+        if jogador == 1:
+        	vitoria = "11"
+        if jogador == 2:
+        	vitoria = "22"
+
         for column in range(len(tabuleiro)):
             s = ""
             for line in range(len(tabuleiro[column])):
                 state = tabuleiro[column][line]
                 s += str(state)
-                if "11111" in s:
+                if "11" in s:
                     return 1
-                if "22222" in s:
+                if "22" in s:
                     return 2
 
         # test upward diagonals
@@ -151,9 +175,9 @@ def is_final_state(tabuleiro):
                 line = coords[1]
                 state = tabuleiro[column - 1][line - 1]
                 s += str(state)
-                if "11111" in s:
+                if "11" in s:
                     return 1
-                if "22222" in s:
+                if "22" in s:
                     return 2
                 coords = neighbors(tabuleiro, column, line)[1]
 
@@ -168,9 +192,9 @@ def is_final_state(tabuleiro):
                 line = coords[1]
                 state = tabuleiro[column - 1][line - 1]
                 s += str(state)
-                if "11111" in s:
+                if "11" in s:
                     return 1
-                if "22222" in s:
+                if "22" in s:
                     return 2
                 coords = neighbors(tabuleiro, column, line)[4]
 
@@ -201,6 +225,18 @@ player = int(sys.argv[1])
 resp = urllib.request.urlopen("%s/reiniciar" % host)
 
 done = False
+
+#Divide o tabuleiro em 4:
+
+resp = urllib.request.urlopen("%s/tabuleiro" % host)
+tab = eval(resp.read())
+
+tabCima = geraTab(tab, 'cima')
+tabEsquerda = geraTab(tab, 'esquerda')
+tabBaixo = geraTab(tab, 'baixo')
+tabDireita = geraTab(tab, 'direita')
+
+
 while not done:
     # Pergunta quem eh o jogador
     resp = urllib.request.urlopen("%s/jogador" % host)
@@ -221,11 +257,39 @@ while not done:
         resp = urllib.request.urlopen("%s/tabuleiro" % host)
         tab = eval(resp.read())
 
-        #APLICA MINIMAX E GERA O MOVIMENTO:
+        #APLICA MINIMAX NAS 4 PARTES DO TABULEIRO E GERA O MOVIMENTO:
 
         tinicial = time.time()
-        valor, escolhido = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-2)
-        tfinal = time.time()
+
+        #valor, escolhido = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-2)
+
+        valorCima, escolhidoCima = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabCima)
+        valor = abs(valorCima)
+        escolhido = escolhidoCima
+        print('Fez tabela de cima')
+
+        valorEsquerda, escolhidoEsquerda = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabEsquerda)
+        if(abs(valorEsquerda) > valor and valorEsquerda != 0):
+        	valor = abs(valorEsquerda)
+        	escolhido = escolhidoEsquerda
+
+        print('Fez tabela da esquerda')
+
+        valorBaixo, escolhidoBaixo = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabBaixo)
+        if(abs(valorBaixo) > valor and valorBaixo != 0):
+        	valor = abs(valorBaixo)
+        	escolhido = escolhidoBaixo
+
+        print('Fez tabela de baixo')
+
+        valorDireita, escolhidoDireita = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabDireita)
+        if(abs(valorDireita) > valor and valorDireita != 0):
+        	valor = abs(valorDireita)
+        	escolhido = escolhidoDireita
+
+        print('Fez tabela da direita')
+
+       	tfinal = time.time()
         print('Tempo total: ')
         print(tfinal - tinicial)
 
