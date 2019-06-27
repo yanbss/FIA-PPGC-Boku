@@ -178,7 +178,7 @@ def get_available_moves(tabuleiro):
         return removal_options
     for column in range(len(tabuleiro)):
         for line in range(len(tabuleiro[column])):
-            if(tabuleiro[column][line] == 0 and tabuleiro[column][line] != ultima_jogada):
+            if(tabuleiro[column][line] == 0 and (column, line) != ultima_jogada):
                     l.append((column, line))
     return l
 
@@ -299,6 +299,64 @@ def can_remove(tabuleiro):
         else:
             return None
 
+def decrementa(tabuleiro): #testa se, após incrmentar de 3 pra 4 ou 4 pra 5, a jogada seguinte bloqueou a possibilidade de expansão
+
+    global vitoria1, vitoria2
+
+    vit1 = "111"
+    vit2 = "222"
+
+    if(vitoria1 == "11111"):
+        vit1 = "1111"
+    if(vitoria2 == "22222"):
+        vit2 = "2222"
+
+    for column in range(len(tabuleiro)):
+        s = ""
+        for line in range(len(tabuleiro[column])):
+            state = tabuleiro[column][line]
+            s += str(state)
+            if ((vit1 + "2") in s or (("2" + vit1) in s)):
+                return 1
+            if ((vit2 + "1") in s or (("1" + vit2) in s)):
+                return 2
+
+    # test upward diagonals
+    diags = [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
+             (2, 6), (3, 7), (4, 8), (5, 9), (6, 10)]
+    for column_0, line_0 in diags:
+        s = ""
+        coords = (column_0, line_0)
+        while coords != None:
+            column = coords[0]
+            line = coords[1]
+            state = tabuleiro[column - 1][line - 1]
+            s += str(state)
+            if ((vit1 + "2") in s or (("2" + vit1) in s)):
+                return 1
+            if ((vit2 + "1") in s or (("1" + vit2) in s)):
+                return 2
+            coords = neighbors(tabuleiro, column, line)[1]
+
+    # test downward diagonals
+    diags = [(6, 1), (5, 1), (4, 1), (3, 1), (2, 1),
+             (1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]
+    for column_0, line_0 in diags:
+        s = ""
+        coords = (column_0, line_0)
+        while coords != None:
+            column = coords[0]
+            line = coords[1]
+            state = tabuleiro[column - 1][line - 1]
+            s += str(state)
+            if ((vit1 + "2") in s or (("2" + vit1) in s)):
+                return 1
+            if ((vit2 + "1") in s or (("1" + vit2) in s)):
+                return 2
+            coords = neighbors(tabuleiro, column, line)[4]
+
+    return None
+
 #########CLIENTE: (adaptado de random_client.py) ###############################################
 
 if len(sys.argv)==1:
@@ -317,7 +375,6 @@ done = False
 
 vitoria1 = "111"
 vitoria2 = "222"
-block = None
 
 #Divide o tabuleiro em 4:
 
@@ -350,14 +407,25 @@ while not done:
         resp = urllib.request.urlopen("%s/tabuleiro" % host)
         tab = eval(resp.read())
 
-        ######ARRUMAR PRA INCREMENTAR QUANDO TEM OUTRO JOGADOR QUE NAO ELE PROPRIO
-
         if(is_final_state(tab) == 1):
             print("Incrementou vitoria1")
             vitoria1 += "1"
         if(is_final_state(tab) == 2):
             print("Incrementou vitoria2")
             vitoria2 += "2"
+
+        #if(vitoria1 != "111"):
+        #    if(decrementa(tab) == 1):
+        #        if(vitoria1 == "1111"):
+        #            vitoria1 = "111"
+        #        else:
+        #            vitoria1 = "1111"
+        #if(vitoria1 != "222"):
+        #    if(decrementa(tab) == 2):
+        #        if(vitoria1 == "2222"):
+        #            vitoria1 = "222"
+        #        else:
+        #            vitoria1 = "2222"
 
         if(len(movimentos) > 2): #jogadas normais, sem remoção
 
@@ -370,17 +438,6 @@ while not done:
             last_line = ultima_jogada[1]
 
             tinicial = time.time()
-
-            #PARA NÃO REPETIR JOGADA BLOQUEADA APÓS UMA REMOÇÃO:
-
-            #if(ultima_jogada in tabCima):
-            #    tabCima.remove(ultima_jogada)
-            #if(ultima_jogada in tabEsquerda):
-            #    tabEsquerda.remove(ultima_jogada)
-            #if(ultima_jogada in tabBaixo):
-            #    tabBaixo.remove(ultima_jogada)
-            #if(ultima_jogada in tabDireita):
-            #    tabBaixo.remove(ultima_jogada)
 
             #Testa o minimax nas 4 partes do tabuleiro e escolhe o que retornar uma jogada com o menor número de níveis abertos necessários
             
@@ -409,20 +466,8 @@ while not done:
             coluna = escolhido[0]
             linha = escolhido[1]
 
-            #if(ultima_jogada in tabCima):
-            #    tabCima.append(ultima_jogada)
-            #if(ultima_jogada in tabEsquerda):
-            #    tabEsquerda.append(ultima_jogada)
-            #if(ultima_jogada in tabBaixo):
-            #    tabBaixo.append(ultima_jogada)
-            #if(ultima_jogada in tabDireita):
-            #    tabBaixo.append(ultima_jogada)
-
         else: #jogada de remoção, escolhe um aleatório para remover
             coluna, linha = random.choice(movimentos)
-            block = coluna, linha
-            print('block: ')
-            print(block)
             coluna -= 1
             linha -= 1
 
