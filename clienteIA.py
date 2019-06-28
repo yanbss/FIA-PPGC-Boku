@@ -3,42 +3,55 @@ from math import inf
 
 ######################FUNÇÕES PARA EXECUTAR IA (MiniMax): #############################################
 
-def miniMax(tabuleiro, nivel, jogador, nivelMax, parte): #nivel máximo = 80
+def miniMax(tabuleiro, nivel, jogador, nivelMax, parte, alfa=-inf, beta=inf): #nivel máximo = 80
 
     filhos = []
     h = heuristica(tabuleiro, nivel)
+    global last_column, last_line
 
     if(h != 0 or nivel == nivelMax): #SE nó é um nó terminal OU profundidade = 0 ENTÃO
         return h, tabuleiro
 
     elif(jogador == 1):                       #SENÃO SE maximizador é FALSE ENTÃO
         minimo = inf                         #α ← +∞
-        escolhido = tabuleiro
+        escolhido = None
         filhos = get_available_moves(tabuleiro) #gera lista de jogadas, tem que botar no tabuleiro
+        if((last_column-1, last_line-1) in filhos): #para não repetir jogada após remoção
+            filhos.remove((last_column-1, last_line-1))
         for filho in filhos:                   #PARA CADA filho DE nó
             x, y = filho
             if(filho in parte):
                 t = copy.deepcopy(tabuleiro)
                 t[x][y] = 1
-                var, tab = miniMax(t, nivel-1, 2, nivelMax, parte)
+                var, tab = miniMax(t, nivel-1, 2, nivelMax, parte, alfa, beta)
                 if(var < minimo):
                     minimo = var                   #α ← min(α, minimax(filho, profundidade-1,true))
                     escolhido = filho
+                minimo = min(minimo, var)
+                beta = min(beta, minimo)
+                if alfa >= beta:
+                    break
         return minimo, escolhido               #RETORNE α
 
     elif(jogador == 2):                        #SENÃO //Maximizador
         maximo = -inf                         #α ← -∞
-        escolhido = tabuleiro
+        escolhido = None
         filhos = get_available_moves(tabuleiro)
+        if((last_column-1, last_line-1) in filhos): #para não repetir jogada após remoção
+            filhos.remove((last_column-1, last_line-1))
         for filho in filhos:                   #PARA CADA filho DE nó
             x, y = filho
             if(filho in parte):
                 t = copy.deepcopy(tabuleiro)
                 t[x][y] = 2
-                var, tab = miniMax(t, nivel-1, 1, nivelMax, parte)
+                var, tab = miniMax(t, nivel-1, 1, nivelMax, parte, alfa, beta)
                 if(var > maximo):
                     maximo = var                   #α ← max(α, minimax(filho, profundidade-1,false))
                     escolhido = filho
+                maximo = max(maximo, var)
+                alfa = max(alfa, maximo)
+                if alfa >= beta:
+                    break
         return maximo, escolhido
 
 
@@ -178,7 +191,7 @@ def get_available_moves(tabuleiro):
         return removal_options
     for column in range(len(tabuleiro)):
         for line in range(len(tabuleiro[column])):
-            if(tabuleiro[column][line] == 0 and (column, line) != ultima_jogada):
+            if(tabuleiro[column][line] == 0):
                     l.append((column, line))
     return l
 
@@ -299,64 +312,6 @@ def can_remove(tabuleiro):
         else:
             return None
 
-def decrementa(tabuleiro): #testa se, após incrmentar de 3 pra 4 ou 4 pra 5, a jogada seguinte bloqueou a possibilidade de expansão
-
-    global vitoria1, vitoria2
-
-    vit1 = "111"
-    vit2 = "222"
-
-    if(vitoria1 == "11111"):
-        vit1 = "1111"
-    if(vitoria2 == "22222"):
-        vit2 = "2222"
-
-    for column in range(len(tabuleiro)):
-        s = ""
-        for line in range(len(tabuleiro[column])):
-            state = tabuleiro[column][line]
-            s += str(state)
-            if ((vit1 + "2") in s or (("2" + vit1) in s)):
-                return 1
-            if ((vit2 + "1") in s or (("1" + vit2) in s)):
-                return 2
-
-    # test upward diagonals
-    diags = [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
-             (2, 6), (3, 7), (4, 8), (5, 9), (6, 10)]
-    for column_0, line_0 in diags:
-        s = ""
-        coords = (column_0, line_0)
-        while coords != None:
-            column = coords[0]
-            line = coords[1]
-            state = tabuleiro[column - 1][line - 1]
-            s += str(state)
-            if ((vit1 + "2") in s or (("2" + vit1) in s)):
-                return 1
-            if ((vit2 + "1") in s or (("1" + vit2) in s)):
-                return 2
-            coords = neighbors(tabuleiro, column, line)[1]
-
-    # test downward diagonals
-    diags = [(6, 1), (5, 1), (4, 1), (3, 1), (2, 1),
-             (1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]
-    for column_0, line_0 in diags:
-        s = ""
-        coords = (column_0, line_0)
-        while coords != None:
-            column = coords[0]
-            line = coords[1]
-            state = tabuleiro[column - 1][line - 1]
-            s += str(state)
-            if ((vit1 + "2") in s or (("2" + vit1) in s)):
-                return 1
-            if ((vit2 + "1") in s or (("1" + vit2) in s)):
-                return 2
-            coords = neighbors(tabuleiro, column, line)[4]
-
-    return None
-
 #########CLIENTE: (adaptado de random_client.py) ###############################################
 
 if len(sys.argv)==1:
@@ -373,8 +328,8 @@ resp = urllib.request.urlopen("%s/reiniciar" % host)
 
 done = False
 
-vitoria1 = "111"
-vitoria2 = "222"
+vitoria1 = "1111"
+vitoria2 = "2222"
 
 #Divide o tabuleiro em 4:
 
@@ -386,6 +341,8 @@ tabEsquerda = geraTab(tab, 'esquerda')
 tabBaixo = geraTab(tab, 'baixo')
 tabDireita = geraTab(tab, 'direita')
 
+primeiro = tabCima
+outros = (tabEsquerda, tabBaixo, tabDireita)
 
 while not done:
     # Pergunta quem eh o jogador
@@ -414,19 +371,6 @@ while not done:
             print("Incrementou vitoria2")
             vitoria2 += "2"
 
-        #if(vitoria1 != "111"):
-        #    if(decrementa(tab) == 1):
-        #        if(vitoria1 == "1111"):
-        #            vitoria1 = "111"
-        #        else:
-        #            vitoria1 = "1111"
-        #if(vitoria1 != "222"):
-        #    if(decrementa(tab) == 2):
-        #        if(vitoria1 == "2222"):
-        #            vitoria1 = "222"
-        #        else:
-        #            vitoria1 = "2222"
-
         if(len(movimentos) > 2): #jogadas normais, sem remoção
 
             #APLICA MINIMAX NAS 4 PARTES DO TABULEIRO E GERA O MOVIMENTO:
@@ -437,34 +381,46 @@ while not done:
             last_column = ultima_jogada[0]
             last_line = ultima_jogada[1]
 
+            if(ultima_jogada != (-1, -1)): #pega ultima jogada do inimigo para começar o minimax por aquela parte do tabuleiro
+                if(ultima_jogada in tabCima):
+                    primeiro = tabCima
+                    outros = (tabEsquerda, tabBaixo, tabDireita)
+                elif(ultima_jogada in tabEsquerda):
+                    primeiro = tabEsquerda
+                    outros = (tabCima, tabBaixo, tabDireita)
+                elif(ultima_jogada in tabDireita):
+                    primeiro = tabDireita
+                    outros = (tabEsquerda, tabCima, tabBaixo)
+                elif(ultima_jogada in tabBaixo):
+                    primeiro = tabBaixo
+                    outros = (tabEsquerda, tabCima, tabDireita)
+
             tinicial = time.time()
 
             #Testa o minimax nas 4 partes do tabuleiro e escolhe o que retornar uma jogada com o menor número de níveis abertos necessários
             
-            valorCima, escolhidoCima = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabCima)
-            valor = abs(valorCima)
-            escolhido = escolhidoCima
+            valorPrimeiro, escolhidoPrimeiro = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-4, primeiro, -inf, inf)
+            valor = abs(valorPrimeiro)
+            escolhido = escolhidoPrimeiro
 
-            valorEsquerda, escolhidoEsquerda = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabEsquerda)
-            if(abs(valorEsquerda) > valor and valorEsquerda != 0):
-                valor = abs(valorEsquerda)
-                escolhido = escolhidoEsquerda
-
-            valorBaixo, escolhidoBaixo = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabBaixo)
-            if(abs(valorBaixo) > valor and valorBaixo != 0):
-                valor = abs(valorBaixo)
-                escolhido = escolhidoBaixo
-
-            valorDireita, escolhidoDireita = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-3, tabDireita)
-            if(abs(valorDireita) > valor and valorDireita != 0):
-                valor = abs(valorDireita)
-                escolhido = escolhidoDireita
+            for parte in outros:
+            	v, e = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-4, parte, -inf, inf)
+            	if(abs(v) > valor and v != 0):
+            		valor = abs(v)
+            		escolhido = e
 
             tfinal = time.time()
             print('Tempo total: ')
             print(tfinal - tinicial)
-            coluna = escolhido[0]
-            linha = escolhido[1]
+            if(escolhido == None):
+                print('entrou no bug')
+                coluna, linha = random.choice(movimentos)
+                coluna -= 1
+                linha -= 1
+            else:
+                coluna = escolhido[0]
+                linha = escolhido[1]
+
 
         else: #jogada de remoção, escolhe um aleatório para remover
             coluna, linha = random.choice(movimentos)
