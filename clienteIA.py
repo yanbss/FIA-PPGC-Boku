@@ -81,6 +81,17 @@ def geraTab(tabuleiro, parte):
         l = [(6,4),(7,3),(7,4),(8,2),(8,3),(8,4),(9,1),(9,2),(9,3),(9,4),(10,0),(10,1),(10,2),(10,3),(10,4)]
     return l
 
+def cheio(tabuleiro, parte):
+
+    i = 0
+
+    for x in parte:
+        (coluna, linha) = x
+        if(tabuleiro[coluna][linha] == 0):
+            return False
+
+    return True
+
 
 ####################FUNÇÕES HERDADAS DE SERVER.PY PARA CÁLCULO DE HEURÍSTICA: ##################################
 
@@ -342,7 +353,7 @@ tabBaixo = geraTab(tab, 'baixo')
 tabDireita = geraTab(tab, 'direita')
 
 primeiro = tabCima
-outros = (tabEsquerda, tabBaixo, tabDireita)
+outros = [tabEsquerda, tabBaixo, tabDireita]
 
 while not done:
     # Pergunta quem eh o jogador
@@ -365,10 +376,8 @@ while not done:
         tab = eval(resp.read())
 
         if(is_final_state(tab) == 1):
-            print("Incrementou vitoria1")
             vitoria1 += "1"
         if(is_final_state(tab) == 2):
-            print("Incrementou vitoria2")
             vitoria2 += "2"
 
         if(len(movimentos) > 2): #jogadas normais, sem remoção
@@ -384,16 +393,24 @@ while not done:
             if(ultima_jogada != (-1, -1)): #pega ultima jogada do inimigo para começar o minimax por aquela parte do tabuleiro
                 if(ultima_jogada in tabCima):
                     primeiro = tabCima
-                    outros = (tabEsquerda, tabBaixo, tabDireita)
+                    outros = [tabEsquerda, tabBaixo, tabDireita]
                 elif(ultima_jogada in tabEsquerda):
                     primeiro = tabEsquerda
-                    outros = (tabCima, tabBaixo, tabDireita)
+                    outros = [tabCima, tabBaixo, tabDireita]
                 elif(ultima_jogada in tabDireita):
                     primeiro = tabDireita
-                    outros = (tabEsquerda, tabCima, tabBaixo)
+                    outros = [tabEsquerda, tabCima, tabBaixo]
                 elif(ultima_jogada in tabBaixo):
                     primeiro = tabBaixo
-                    outros = (tabEsquerda, tabCima, tabDireita)
+                    outros = [tabEsquerda, tabCima, tabDireita]
+
+            while(cheio(tab, primeiro) == True): #pra não bugar quando aquele lado do tabuleiro já está todo preenchido
+                primeiro = random.choice(outros)
+                outros.remove(primeiro)
+
+            for x in outros: #retira todas as partes que já estão preenchidas
+            	if(cheio(tab, x) == True):
+            		outros.remove(x)
 
             tinicial = time.time()
 
@@ -404,16 +421,15 @@ while not done:
             escolhido = escolhidoPrimeiro
 
             for parte in outros:
-            	v, e = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-4, parte, -inf, inf)
-            	if(abs(v) > valor and v != 0):
-            		valor = abs(v)
-            		escolhido = e
+                if(cheio(tab, parte) == False):
+                    v, e = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-4, parte, -inf, inf)
+                    if(abs(v) > valor and v != 0):
+                        valor = abs(v)
+                        escolhido = e
 
             tfinal = time.time()
-            print('Tempo total: ')
-            print(tfinal - tinicial)
-            if(escolhido == None):
-                print('entrou no bug')
+            #print(tfinal - tinicial) #Descomentar para printar o tempo da jogada
+            if(escolhido == None): #caso não consiga encontrar nenhuma jogada ótima
                 coluna, linha = random.choice(movimentos)
                 coluna -= 1
                 linha -= 1
@@ -427,9 +443,7 @@ while not done:
             coluna -= 1
             linha -= 1
 
-        print('posicao escolhida: ')
-        print(coluna+1)
-        print(linha+1)
+        print('(' + str(coluna+1) + ', ' + str(linha+1) + ')')
 
         # Executa o movimento
         resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,coluna+1,linha+1))
