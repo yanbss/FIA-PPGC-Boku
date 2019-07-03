@@ -66,19 +66,23 @@ def heuristica(tabuleiro, nivel):        #retorna o valor da heurística daquele
 
     return 0
 
-
 def geraTab(tabuleiro, parte):
 
     l = []
 
     if(parte == 'cima'):
-        l = [(1,0),(2,0),(2,1),(3,0),(3,1),(3,2),(4,0),(4,1),(4,2),(4,3),(5,0),(5,1),(5,2),(5,3),(5,4),(6,0),(6,1),(6,2),(6,3),(7,0),(7,1),(7,2),(8,0),(8,1),(9,0)]
+        l = [(1,0),(2,0),(2,1),(3,0),(3,1),(3,2),(4,0),(4,1),(4,2),(5,0),(5,1),(5,2),(6,0),(6,1),(6,2),(7,0),(7,1),(7,2),(8,0),(8,1),(9,0)]
     if(parte == 'esquerda'):
-        l = [(0,0),(0,1),(0,2),(0,3),(0,4),(1,1),(1,2),(1,3),(1,4),(2,2),(2,3),(2,4),(3,3),(3,4),(4,4)]
+        l = [(0,0),(0,1),(0,2),(0,3),(0,4),(1,1),(1,2),(1,3),(1,4),(2,2),(2,3),(2,4)]
     if(parte == 'baixo'):
-        l = [(1,5),(2,5),(2,6),(3,5),(3,6),(3,7),(4,5),(4,6),(4,7),(4,8),(5,5),(5,6),(5,7),(5,8),(5,9),(6,5),(6,6),(6,7),(6,8),(7,5),(7,6),(7,7),(8,5),(8,6),(9,5)]
+        l = [(1,5),(2,5),(2,6),(3,5),(3,6),(3,7),(4,6),(4,7),(4,8),(5,7),(5,8),(5,9),(6,6),(6,7),(6,8),(7,5),(7,6),(7,7),(8,5),(8,6),(9,5)]
     if(parte == 'direita'):
-        l = [(6,4),(7,3),(7,4),(8,2),(8,3),(8,4),(9,1),(9,2),(9,3),(9,4),(10,0),(10,1),(10,2),(10,3),(10,4)]
+        l = [(8,2),(8,3),(8,4),(9,1),(9,2),(9,3),(9,4),(10,0),(10,1),(10,2),(10,3),(10,4)]
+    if(parte == 'meio'):
+        l = [(3,3),(3,4),(4,3),(4,4),(4,5),(5,3),(5,4),(5,5),(5,6),(6,3),(6,4),(6,5),(7,3),(7,4)]
+    if(parte == 'todo'):
+        l = [(1,0),(2,0),(2,1),(3,0),(3,1),(3,2),(4,0),(4,1),(4,2),(4,3),(5,0),(5,1),(5,2),(5,3),(5,4),(6,0),(6,1),(6,2),(6,3),(7,0),(7,1),(7,2),(8,0),(8,1),(9,0),(0,0),(0,1),(0,2),(0,3),(0,4),(1,1),(1,2),(1,3),(1,4),(2,2),(2,3),(2,4),(3,3),(3,4),(4,4),(1,5),(2,5),(2,6),(3,5),(3,6),(3,7),(4,5),(4,6),(4,7),(4,8),(5,5),(5,6),(5,7),(5,8),(5,9),(6,5),(6,6),(6,7),(6,8),(7,5),(7,6),(7,7),(8,5),(8,6),(9,5),(6,4),(7,3),(7,4),(8,2),(8,3),(8,4),(9,1),(9,2),(9,3),(9,4),(10,0),(10,1),(10,2),(10,3),(10,4)]
+
     return l
 
 def cheio(tabuleiro, parte):
@@ -339,8 +343,9 @@ resp = urllib.request.urlopen("%s/reiniciar" % host)
 
 done = False
 
-vitoria1 = "1111"
-vitoria2 = "2222"
+vitoria1 = "111"
+vitoria2 = "222"
+contadorJogadas = 0
 
 #Divide o tabuleiro em 4:
 
@@ -351,9 +356,11 @@ tabCima = geraTab(tab, 'cima')
 tabEsquerda = geraTab(tab, 'esquerda')
 tabBaixo = geraTab(tab, 'baixo')
 tabDireita = geraTab(tab, 'direita')
+tabMeio = geraTab(tab, 'meio')
+todo = geraTab(tab, 'todo')
 
-primeiro = tabCima
-outros = [tabEsquerda, tabBaixo, tabDireita]
+primeiro = tabMeio
+outros = [tabCima, tabEsquerda, tabBaixo, tabDireita]
 
 while not done:
     # Pergunta quem eh o jogador
@@ -390,49 +397,63 @@ while not done:
             last_column = ultima_jogada[0]
             last_line = ultima_jogada[1]
 
-            if(ultima_jogada != (-1, -1)): #pega ultima jogada do inimigo para começar o minimax por aquela parte do tabuleiro
-                if(ultima_jogada in tabCima):
-                    primeiro = tabCima
-                    outros = [tabEsquerda, tabBaixo, tabDireita]
-                elif(ultima_jogada in tabEsquerda):
-                    primeiro = tabEsquerda
-                    outros = [tabCima, tabBaixo, tabDireita]
-                elif(ultima_jogada in tabDireita):
-                    primeiro = tabDireita
-                    outros = [tabEsquerda, tabCima, tabBaixo]
-                elif(ultima_jogada in tabBaixo):
-                    primeiro = tabBaixo
-                    outros = [tabEsquerda, tabCima, tabDireita]
-
-            while(cheio(tab, primeiro) == True): #pra não bugar quando aquele lado do tabuleiro já está todo preenchido
-                primeiro = random.choice(outros)
-                outros.remove(primeiro)
-
-            for x in outros: #retira todas as partes que já estão preenchidas
-            	if(cheio(tab, x) == True):
-            		outros.remove(x)
-
             tinicial = time.time()
 
             #Testa o minimax nas 4 partes do tabuleiro e escolhe o que retornar uma jogada com o menor número de níveis abertos necessários
-            
-            valorPrimeiro, escolhidoPrimeiro = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-4, primeiro, -inf, inf)
-            valor = abs(valorPrimeiro)
-            escolhido = escolhidoPrimeiro
 
-            for parte in outros:
-                if(cheio(tab, parte) == False):
-                    v, e = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-4, parte, -inf, inf)
-                    if(abs(v) > valor and v != 0):
-                        valor = abs(v)
-                        escolhido = e
+            if(contadorJogadas < -1): #primeiras jogadas considera todo o tabuleiro
+
+                nivelMax = len(movimentos)-3
+                valor, escolhido = miniMax(copy.deepcopy(tab), len(movimentos), player, nivelMax, todo, -inf, inf)
+
+            else: #da quarta jogada em diante, divide o tabuleiro em partes
+
+                if(ultima_jogada != (-1, -1)): #pega ultima jogada do inimigo para começar o minimax por aquela parte do tabuleiro
+                    if(ultima_jogada in tabMeio):
+                    	primeiro = tabMeio
+                    	outros = [tabCima, tabEsquerda, tabBaixo, tabDireita]
+                    elif(ultima_jogada in tabCima):
+                        primeiro = tabCima
+                        outros = [tabMeio, tabEsquerda, tabBaixo, tabDireita]
+                    elif(ultima_jogada in tabEsquerda):
+                        primeiro = tabEsquerda
+                        outros = [tabMeio, tabCima, tabBaixo, tabDireita]
+                    elif(ultima_jogada in tabDireita):
+                        primeiro = tabDireita
+                        outros = [tabMeio, tabEsquerda, tabCima, tabBaixo]
+                    elif(ultima_jogada in tabBaixo):
+                        primeiro = tabBaixo
+                        outros = [tabMeio, tabEsquerda, tabCima, tabDireita]
+                    
+
+                while(cheio(tab, primeiro) == True): #pra não bugar quando aquele lado do tabuleiro já está todo preenchido
+                    primeiro = random.choice(outros)
+                    outros.remove(primeiro)
+
+                for x in outros: #retira todas as partes que já estão preenchidas
+                    if(cheio(tab, x) == True):
+                        outros.remove(x)
+
+                valorPrimeiro, escolhidoPrimeiro = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-4, primeiro, -inf, inf)
+                valor = abs(valorPrimeiro)
+                escolhido = escolhidoPrimeiro
+
+                for parte in outros:
+                    if(cheio(tab, parte) == False):
+                        v, e = miniMax(copy.deepcopy(tab), len(movimentos), player, len(movimentos)-4, parte, -inf, inf)
+                        if(abs(v) < valor and v != 0):
+                            valor = abs(v)
+                            escolhido = e
+
 
             tfinal = time.time()
-            #print(tfinal - tinicial) #Descomentar para printar o tempo da jogada
+            print('Tempo: ' + str(tfinal - tinicial))
+            
             if(escolhido == None): #caso não consiga encontrar nenhuma jogada ótima
                 coluna, linha = random.choice(movimentos)
                 coluna -= 1
                 linha -= 1
+            
             else:
                 coluna = escolhido[0]
                 linha = escolhido[1]
@@ -448,6 +469,7 @@ while not done:
         # Executa o movimento
         resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,coluna+1,linha+1))
         msg = eval(resp.read())
+        contadorJogadas += 1
 
         # Se com o movimento o jogo acabou, o cliente venceu
         if msg[0]==0:
